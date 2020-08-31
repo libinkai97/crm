@@ -3,6 +3,8 @@
 
 axios.defaults.baseURL = "http://127.0.0.1:8888";
 
+axios.defaults.withCredentials = true;
+
 axios.defaults.headers['Content-Type'] = 'application/x-www-form-urlencoded';
 
 axios.defaults.transformRequest = function (data) {
@@ -36,6 +38,6 @@ axios.interceptors.response.use(response => {
     return Promise.reject(reason);
 })
 
-// axios.defaults.validateStatus = function (status) {
-//     return /^(2|3)\d{2}$/.test(status);
-// }
+axios.defaults.validateStatus = function (status) {
+    return /^(2|3)\d{2}$/.test(status);
+}
