@@ -1,4 +1,5 @@
 $(function () {
+    let checkList = null;
 
     initDepartMent();
     async function initDepartMent() {
@@ -11,6 +12,9 @@ $(function () {
             $(".selectBox").html(str);
         }
     }
+
+
+
 
     showUserList();
     async function showUserList() {
@@ -42,6 +46,125 @@ $(function () {
 			</tr>`;
         })
         $("tbody").html(str)
+        checkList = $("tbody").find('input[type="checkbox"]')
     }
 
+
+    searchHandle();
+    function searchHandle(){
+        $(".selectBox").change(showUserList);
+        $(".searchInp").on("keydown",e=>{
+            if(e.keyCode === 13){
+                showUserList();
+            }
+        })
+    }
+
+    delegate();
+    function delegate(){
+        $("tbody").on("click","a", async e=>{
+            // console.log(e)
+            let target =e.target,
+                tag = target.tagName,
+                text = target.innerHTML.trim();
+            if(tag === "A"){
+                let userId = $(target).parent().attr("userid")
+                if(text ==="编辑"){
+                    // console.log("实现编辑功能")
+                    window.location.href = `useradd.html?id=${userId}`
+                    return;
+                }
+                if(text ==="删除"){
+                    // console.log("实现删除功能")
+                    let flag = confirm("你确定要删除此用户吗？")
+                    if(!flag) return;;
+                    let result = await axios.get("/user/delete",{
+                        params:{ userId }
+                    })
+                    if(result.code ===0 ){
+                        alert("删除用户信息~")
+                        $(target).parent().parent().remove();
+                        checkList = $("tbody").find('input[type="checkbox"]')
+                        return;
+                    }
+                    return;
+                }
+                if(text ==="重置密码"){
+                    // console.log("实现重置密码功能")
+                    let flag = confirm("你确定要重置此用户的密码吗？")
+                    if(!flag) return;;
+                    let result = await axios.post("/user/resetpassword",{
+                        userId 
+                    })
+                    if(result.code ===0 ){
+                        alert("重置密码成功，告诉你的员工~")
+                        return;
+                    }
+                    return;
+                }
+            }
+        })
+    }
+
+    selectHandle();
+    function selectHandle(){
+        $("#checkAll").click(e=>{
+            let checked = $("checkAll").prop("checked")
+            checkList.prop("checked",checked)
+        });
+
+        $("tbody").on("click","input",e=>{
+            if(e.target.tagName === "INPUT"){
+                let flag = true;
+                newCheckList = Array.from(checkList)
+                newCheckList.forEach(item=>{
+                    if(!$(item).prop("checked")){
+                        flag=false;
+                    }
+                })
+                $("#checkAll").prop("checked",flag)
+            }
+        })
+    }
+
+    $(".deleteAll").click(e=>{
+        let arr = [];
+        [].forEach.call(checkList,item=>{
+            if($(item).prop("checked")){
+                console.log($(item))
+                arr.push($(item).attr("userid"))
+            }
+        })
+        // console.log(arr)
+
+        if(arr.length === 0){
+            alert("你需要先选中一些用户~")
+            return;
+        }
+        let flag = confirm("你确定要删除这些用户吗？")
+        if(!flag) return;
+
+        let index = -1;
+        async function deleteUser(){
+            let userId = arr[++index];
+
+            if(index>=arr.length){
+                alert("已成功删除员工~")
+                showUserList();
+                return;
+            }
+
+            let result = await axios.get("/user/delete",{
+                params:{
+                    userId
+                }
+            })
+            if(result.code != 0){
+
+                return
+            }
+            deleteUser();
+        }
+        deleteUser();
+    })
 })
